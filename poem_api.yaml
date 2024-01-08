@@ -1,0 +1,92 @@
+openapi: 3.0.0
+info: 
+  title: Poem Api
+  description: An api that generates poems via Google Gemini and provides them as text or as audio synthesized via the Google Text-to-Speech API
+  version: 1.0.0
+paths:
+  /print_poem:
+    get:
+      description: Generates a poem and returns it as plain text.
+      operationId: main.print_poem
+      parameters:
+        - name: language
+          description: the language as IETF language tag
+          in: query
+          required: false
+          schema:
+            type: string
+            default: en
+        - name: max_length
+          description: the maximum length of the poem (in lines)
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 2
+            maximum: 24
+            default: 12
+        - name: topic
+          description: the topic the poem should be about
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The poem was generated
+          content: 
+            text/plain;charset=UTF-8:
+              schema: 
+                type: string
+  /read_poem:
+    get:
+      description: Generates a poem, synthesizes it via TTS and returns it as mp3.
+      operationId: main.read_poem
+      parameters:
+        - name: language
+          description: the language as IETF language tag
+          in: query
+          required: false
+          schema:
+            type: string
+            default: en
+        - name: max_length
+          description: the maximum length of the poem (in lines), must not exceed 24
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 2
+            maximum: 24
+            default: 12
+        - name: topic
+          description: the topic of the poem
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: gender
+          description: the gender of the TTS voice to use
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [female, male, unspecified]
+            default: unspecified
+      responses:
+        "200":
+          description: The poem was generated
+          content: 
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: query
+      name: api_key
+      x-apikeyInfoFunc: main.apikey_auth
+security: 
+  - apiKey: []
