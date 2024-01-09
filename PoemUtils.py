@@ -11,7 +11,7 @@ class PoemUtils:
         
     _generative_model: GenerativeModel = None
 
-    def generate_poem(self, language: str, max_length: int, topic: str | None) -> str:
+    async def generate_poem(self, language: str, max_length: int, topic: str | None) -> str:
         """Generates a poem in the provided language with the provided maximum length, optionally about the provided topic.
 
         Args:
@@ -23,7 +23,7 @@ class PoemUtils:
             The generated poem.
         """
         prompt = self._build_prompt(language, max_length, topic)
-        return self._query_generative_model(prompt)
+        return await self._query_generative_model(prompt)
 
 
     def _build_prompt(self, language: str, max_length: int, topic: str | None) -> str:
@@ -40,7 +40,7 @@ class PoemUtils:
         topic_part = "" if topic is None else f"about '{topic}' "
         return f"Generate a poem {topic_part}that rhymes in the language represented by the IETF language tag '{language}' with the maximum length of {max_length} lines."
         
-    def _query_generative_model(self, prompt: str) -> str:
+    async def _query_generative_model(self, prompt: str) -> str:
         """Queries the generative model with the provided prompt and returns the resulting text.
 
         Args:
@@ -54,7 +54,7 @@ class PoemUtils:
         """
         print (f"querying generative model with prompt '{prompt}'")
         self._prepare_generative_model()    
-        response: GenerationResponse = self._generative_model.generate_content(prompt)
+        response: GenerationResponse = await self._generative_model.generate_content_async(prompt)
         print ("response: ", response)
         if not response.candidates:
             raise InternalServerError("generation failed, no candidates were returned")

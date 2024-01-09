@@ -9,7 +9,7 @@ poem_utils = PoemUtils()
 tts_utils = TtsUtils()
 authorization_utils = AuthorizationUtils()
 
-def print_poem(language: str, max_length: int, topic: str = None) -> tuple[str, int]:
+async def print_poem(language: str, max_length: int, topic: str = None) -> tuple[str, int]:
     """Generates a poem and returns it as plain text.
 
     Args:
@@ -20,9 +20,9 @@ def print_poem(language: str, max_length: int, topic: str = None) -> tuple[str, 
     Returns:
         The generated poem as plain text and the response code.
     """
-    return poem_utils.generate_poem(language, max_length, topic), 200
+    return await poem_utils.generate_poem(language, max_length, topic), 200
 
-def read_poem(language: str, max_length: int, gender: str, topic: str | None = None) -> tuple[bytes, int]:
+async def read_poem(language: str, max_length: int, gender: str, topic: str | None = None) -> tuple[bytes, int]:
     """Generates a poem, synthesizes it via TTS and returns it as mp3.
 
     Args:
@@ -34,11 +34,11 @@ def read_poem(language: str, max_length: int, gender: str, topic: str | None = N
     Returns:
         The poem as bytes representing the mp3 data and the response code.
     """
-    poem: str = poem_utils.generate_poem(language, max_length, topic)
-    audio: bytes = tts_utils.synthesize(poem, language, gender)
+    poem: str = await poem_utils.generate_poem(language, max_length, topic)
+    audio: bytes = await tts_utils.synthesize(poem, language, gender)
     return audio, 200
 
-def apikey_auth(api_key: str)-> None:
+async def apikey_auth(api_key: str)-> None:
     """ Uses the provided api key to perform authorization.
 
     Args:
@@ -51,7 +51,7 @@ def apikey_auth(api_key: str)-> None:
         Unauthorized if the api key is not valid.
     """
     # will throw an exception if not authorized
-    authorization_utils.check_api_key(api_key)
+    await authorization_utils.check_api_key(api_key)
     return {"active": True}
 
 app.add_api("poem_api.yaml")

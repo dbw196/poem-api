@@ -1,15 +1,15 @@
 
-from google.cloud.texttospeech import TextToSpeechClient, SynthesisInput, VoiceSelectionParams, AudioConfig, AudioEncoding, SynthesizeSpeechResponse, SsmlVoiceGender, Voice
+from google.cloud.texttospeech import TextToSpeechAsyncClient, SynthesisInput, VoiceSelectionParams, AudioConfig, AudioEncoding, ListVoicesResponse, SynthesizeSpeechResponse, SsmlVoiceGender, Voice
 from connexion.exceptions import InternalServerError
 
 class TtsUtils:
     """
     Provides means to synthesize a text via the google cloud TTS service.
     """
-    _tts_client: TextToSpeechClient = None
+    _tts_client: TextToSpeechAsyncClient = None
     _audio_config: AudioConfig = None
 
-    def synthesize(self, text: str, language: str, gender: str) -> bytes:
+    async def synthesize(self, text: str, language: str, gender: str) -> bytes:
         """
         Synthesizes the provided text with a voice matching the provided language and gender.
 
@@ -30,21 +30,21 @@ class TtsUtils:
         ssml_voice_gender = self._map_gender(gender)
         print(f"synthesizing the following text in language {language} with voice of gender {ssml_voice_gender}")
         print(text)
-        voice: Voice = self._find_voice(language, ssml_voice_gender)
+        voice: Voice = await self._find_voice(language, ssml_voice_gender)
         if voice is not None:
             print(f"found voice {voice.name}")
             voice: VoiceSelectionParams = VoiceSelectionParams(language_code=voice.language_codes[0], name=voice.name)
         else:
             raise InternalServerError(f"didn't find voice for language {language}")
         synthesis_input = SynthesisInput(text=text)
-        response: SynthesizeSpeechResponse = self._tts_client.synthesize_speech(input=synthesis_input, voice=voice, audio_config=self._audio_config)
+        response: SynthesizeSpeechResponse = await self._tts_client.synthesize_speech(input=synthesis_input, voice=voice, audio_config=self._audio_config)
         return response.audio_content
     
     def _prepare_tts(self) -> None:
         """Intitializes the TextToSpeechClient and AudioConfig if not yet done."""
         if self._tts_client is None:
             print("initializing TTS")
-            self._tts_client = TextToSpeechClient()
+            self._tts_client = TextToSpeechAsyncClient()
             self._audio_config: AudioConfig = AudioConfig(audio_encoding=AudioEncoding.MP3)
             print("TTS initialized")
         else:
@@ -67,7 +67,7 @@ class TtsUtils:
             return SsmlVoiceGender.SSML_VOICE_GENDER_UNSPECIFIED
     
 
-    def _find_voice(self, language: str, gender: SsmlVoiceGender) -> Voice | None:
+    async def _find_voice(self, language: str, gender: SsmlVoiceGender) -> Voice | None:
         """
         Finds a TTS Voice matching the provided language and potentially the provided gender.
         
@@ -83,7 +83,8 @@ class TtsUtils:
         Returns:
             The voice best that matches the requirements explained above, or None if no voice for the provided language is available.
         """
-        voices: list[Voice] = list(self._tts_client.list_voices(language_code=language).voices)
+        response: ListVoicesResponse = await self._tts_client.list_voices(language_code=language)
+        voices: list[Voice] = list(response.voices)
         voices_matching_gender: list[Voice] = list(filter(lambda voice: gender == SsmlVoiceGender.SSML_VOICE_GENDER_UNSPECIFIED or voice.ssml_gender == gender, voices))
         hq_voices: list[Voice] = list(filter(lambda voice: "Neural" in voice.name or "Wavenet" in voice.name, voices))
         hq_voices_matching_gender: list[Voice] = list(filter(lambda voice: voice in voices_matching_gender, hq_voices))

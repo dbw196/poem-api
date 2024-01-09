@@ -1,10 +1,10 @@
-from google.cloud.secretmanager import SecretManagerServiceClient, AccessSecretVersionRequest, SecretVersion
+from google.cloud.secretmanager import SecretManagerServiceAsyncClient, SecretVersion
 from constants import PROJECT_ID, SECRET_NAME, SECRET_VERSION
 from google_crc32c import Checksum
 from connexion.exceptions import Unauthorized
 
 class AuthorizationUtils:
-    _client: SecretManagerServiceClient = None
+    _client: SecretManagerServiceAsyncClient = None
 
     """Checks whether the provided api key is valid.
 
@@ -14,12 +14,12 @@ class AuthorizationUtils:
     Raises:
         Unauthorized if the api key is not valid or the data retrieved from the secret is corrupt.
     """
-    def check_api_key(self, api_key: str) -> None:
+    async def check_api_key(self, api_key: str) -> None:
         self._prepare()
         #https://cloud.google.com/secret-manager/docs/access-secret-version#access_a_secret_version
         name: str = self._client.secret_version_path(PROJECT_ID, SECRET_NAME, SECRET_VERSION)
         #request = new AccessSecretVersionRequest(na)
-        secret_version: SecretVersion = self._client.access_secret_version(name=name)
+        secret_version: SecretVersion = await self._client.access_secret_version(name=name)
         crc32c = Checksum()
         data = secret_version.payload.data
         crc32c.update(data)
@@ -33,7 +33,7 @@ class AuthorizationUtils:
         """Intitializes the SecretManagerServiceClient if not yet done."""
         if self._client is None:
             print("instantiating SecretManagerServiceClient")
-            self._client = SecretManagerServiceClient()
+            self._client = SecretManagerServiceAsyncClient()
             print("instantiated SecretManagerServiceClient")
         else:
             print("SecretManagerServiceClient was already instantiated")
