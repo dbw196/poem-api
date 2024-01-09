@@ -1,6 +1,6 @@
 import vertexai
-from vertexai.preview.generative_models import GenerativeModel, GenerationResponse
-from google.cloud.aiplatform_v1beta1.types.content import Candidate
+from vertexai.preview.generative_models import GenerativeModel, GenerationResponse, Candidate
+import google.cloud.aiplatform_v1beta1.types.content as types
 from constants import PROJECT_ID, GENERATIVE_MODEL_LOCATION, GENERATIVE_MODEL_NAME 
 from connexion.exceptions import InternalServerError
 
@@ -59,7 +59,7 @@ class PoemUtils:
         if not response.candidates:
             raise InternalServerError("generation failed, no candidates were returned")
         candidate: Candidate = response.candidates[0]
-        if not candidate.finish_reason == Candidate.FinishReason.STOP:
+        if not candidate.finish_reason == types.Candidate.FinishReason.STOP:
             raise InternalServerError(f"generation failed, finish reason is not STOP but {candidate.finish_reason}")
         return candidate.text
 
