@@ -1,4 +1,4 @@
-from google.cloud.secretmanager import SecretManagerServiceAsyncClient, SecretVersion
+from google.cloud.secretmanager import SecretManagerServiceAsyncClient, AccessSecretVersionResponse, SecretPayload
 from constants import PROJECT_ID, SECRET_NAME, SECRET_VERSION
 from google_crc32c import Checksum
 from connexion.exceptions import Unauthorized
@@ -18,14 +18,13 @@ class AuthorizationUtils:
         self._prepare()
         #https://cloud.google.com/secret-manager/docs/access-secret-version#access_a_secret_version
         name: str = self._client.secret_version_path(PROJECT_ID, SECRET_NAME, SECRET_VERSION)
-        #request = new AccessSecretVersionRequest(na)
-        secret_version: SecretVersion = await self._client.access_secret_version(name=name)
+        response: AccessSecretVersionResponse = await self._client.access_secret_version(name=name)
+        payload: SecretPayload = response.payload
         crc32c = Checksum()
-        data = secret_version.payload.data
-        crc32c.update(data)
-        if secret_version.payload.data_crc32c != int(crc32c.hexdigest(), 16):
+        crc32c.update(payload.data)
+        if payload.data_crc32c != int(crc32c.hexdigest(), 16):
             raise Unauthorized("Data corruption detected")
-        expected_key = data.decode("UTF-8")
+        expected_key = payload.data.decode("UTF-8")
         if api_key != expected_key:
             raise Unauthorized("Wrong API key")
         
