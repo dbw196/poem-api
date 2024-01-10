@@ -50,3 +50,6 @@ For example for generating a poem about Gent in Flemish, with a maximum length o
 
     http://localhost:8000/read_poem?language=nl-BE&topic=Gent&gender=female&max_length=10&api_key=<insert api key>
 
+**Note:** *As I left the safety settings at their default, sometimes the model failes to generate, e.g. because of safety violations. No retry behavior is implemented for this case. This is indicated by an Internal Server Error with the description "generation failed, finish reason is not STOP but X". In that case, just retry or use another topic for the request.*   
+
+
